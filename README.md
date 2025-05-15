@@ -12,8 +12,19 @@ Install the dependencies with Anaconda and activate the environment with:
 1. Prepare datasets.
 2. Download pretrained checkpoints [here]
 3. Modify options, including dataroot_GT, dataroot_LQ and pretrain_model_G.
-4. Choose a model to sample (Default: UniDB): test function in `codes/models/denoising_model.py`.
-5. `python test.py -opt=options/test.yml`
+4. Choose a model to sample (Default: UniDB (Euler)): test function in `codes/models/denoising_model.py`.
+5. In test.yml, setting corresponding parameters:
+    + `solver_step` (for UniDB++)
+        + possible values: 5, 10, 20, 25, 50, 100;
+        + As for Euler methods, we fixed 100 steps.
+    + `method` (for UniDB & UniDB++):
+        + possible values: euler, noise-solver-1, noise-solver-2, data-solver-1, data-solver-2;
+    + `solver_type` (for UniDB & UniDB++):
+        + possible values: sde, mean-ode;
+    + `gamma (for UniDB & UniDB++)`:
+        + possible values: 1e6, 1e7, 1e8,...;
+        + gamma should be consistent with the pre-trained pth.
+6. `python test.py -opt=options/test.yml`
 
 The Test results will be saved in `\results`.
 
