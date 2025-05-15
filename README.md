@@ -21,7 +21,7 @@ Install the dependencies with Anaconda and activate the environment with:
         + possible values: euler, noise-solver-1, noise-solver-2, data-solver-1, data-solver-2;
     + `solver_type` (for UniDB & UniDB++):
         + possible values: sde, mean-ode;
-    + `gamma (for UniDB & UniDB++)`:
+    + `gamma` (for UniDB & UniDB++):
         + possible values: 1e6, 1e7, 1e8,...;
         + gamma should be consistent with the pre-trained pth.
 6. `python test.py -opt=options/test.yml`
