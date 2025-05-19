@@ -8,12 +8,12 @@ sde:
   lambda_square: 30
   T: 100
 
-  solver_step: 20 # steps for unidb-solver
-  method: euler # method for solver: euler, noise-solver-1, noise-solver-2, data-solver-1, data-solver-2...
-  solver_type: sde # sde/mean-ode/pf-ode
+  solver_step: 20 # steps for unidb-solver: 5, 10, 20, 25, 50, 100
+  method: euler # method for solver: euler, noise-solver-1, noise-solver-2, data-solver-1, data-solver-2
+  solver_type: sde # sde/mean-ode
   schedule: cosine # linear, cosine
   eps: 0.005
-  gamma: !!float 1e7
+  gamma: !!float 1e7 # 1e6, 1e7, 1e8
   
 degradation:
   # for super-resolution
