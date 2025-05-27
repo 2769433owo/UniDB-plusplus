@@ -10,7 +10,7 @@ Install the dependencies with Anaconda and activate the environment with:
 
 ## Test
 1. Prepare datasets.
-2. Download pretrained checkpoints [here]
+2. Download pretrained checkpoints [here](https://drive.google.com/drive/folders/1R54cv90wgRgi11mq-rw_Hj55tZ5-wR4O?usp=sharing)
 3. Modify options, including dataroot_GT, dataroot_LQ and pretrain_model_G.
 4. Choose a model to sample (Default: UniDB (Euler)): test function in `codes/models/denoising_model.py`.
 5. In test.yml, setting corresponding parameters:
