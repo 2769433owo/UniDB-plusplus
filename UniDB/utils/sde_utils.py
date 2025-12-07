@@ -66,7 +66,7 @@ class SDE(abc.ABC):
 #############################################################################
 
 
-class GOUB(SDE):
+class UniDB(SDE):
     '''
     Let timestep t start from 1 to T, state t=0 is never used
     '''
@@ -440,15 +440,11 @@ class GOUB(SDE):
     def beta_inv(self, beta):
         real = 0.5 * torch.log((torch.exp(2 * self.thetas_cumsum[-1] * self.dt) + torch.exp(self.thetas_cumsum[-1] * self.dt) * torch.exp(beta)) / (1 + torch.exp(self.thetas_cumsum[-1] * self.dt) * torch.exp(beta)))
         diff = torch.abs(self.thetas_cumsum * self.dt - real)
-        # print(diff)
-        # print(torch.argmin(diff))
         return torch.argmin(diff)
     
     def beta_inv_gamma(self, beta):
         real = 0.5 * torch.log((torch.exp(2 * self.thetas_cumsum[-1] * self.dt) * (1 + 1 / (self.gamma * self.lambda_square * self.lambda_square)) + torch.exp(self.thetas_cumsum[-1] * self.dt) * torch.exp(beta)) / (1 + torch.exp(self.thetas_cumsum[-1] * self.dt) * torch.exp(beta)))
         diff = torch.abs(self.thetas_cumsum * self.dt - real)
-        # print(diff)
-        # print(torch.argmin(diff))
         return torch.argmin(diff)
     
     def delta_noise(self, s, t):
@@ -461,196 +457,6 @@ class GOUB(SDE):
         if t == 0:
             res = 0
         return res
-
-    # def reverse_mean_ode_solver(self, xt, T=-1, save_states=False, save_dir='ode_state', **kwargs):
-    #     # T = self.solver_step if T < 0 else T
-    #     step_size = self.T // self.solver_step
-    #     x = xt.clone()
-    #     for t in tqdm(range(self.T, 0, -step_size)):
-    #         noise = self.model(x, self.mu, t, **kwargs) if t != self.T else 0
-    #         # score = - noise / self.f_sigma(t) if t != 100 else 0
-    #         # x = self.reverse_mean_ode_step(x, score, t)
-    #         t_i1 = t - step_size
-    #         # print(t)
-    #         # print(t_i1)
-    #         # print(self.exp_a_bar_s_t(t_i1, t)) 
-    #         # print(self.exp_theta_bar_s_t(t_i1, t))
-    #         # print(torch.sqrt(self.exp_minus_beta_t(t_i1)))
-    #         # print(torch.sqrt(self.exp_minus_beta_t(t)))
-    #         # print(torch.sqrt(self.exp_minus_beta_t(t_i1)) - torch.sqrt(self.exp_minus_beta_t(t)))
-    #         # print(self.beta_t(self.T - step_size))
-    #         # print(self.beta_t(t))
-    #         # print(self.beta_t(step_size))
-    #         if t == self.T:
-    #             # print("asdasd")
-    #             x = self.exp_theta_bar_s_t(t_i1, t) * x + (1 - self.exp_theta_bar_s_t(t_i1, t)) * self.mu
-    #             # x = x * self.dt
-    #         else:
-    #             x = self.exp_a_bar_s_t(t_i1, t) * x + (1 - self.exp_a_bar_s_t(t_i1, t)) * self.mu - 2 * self.lambda_square * self.ode_alpha_t(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t(t)) - torch.sqrt(self.exp_minus_beta_t(t_i1))) * noise
-    #             # x = x * self.dt
-                
-
-    #         if save_states:  # only consider to save 100 images
-    #             interval = self.T // self.solver_step
-    #             if t % interval == 0:
-    #                 idx = t // interval
-    #                 os.makedirs(save_dir, exist_ok=True)
-    #                 tvutils.save_image(x.data, f'{save_dir}/state_{idx}.png', normalize=False)
-
-    #     return x
-    
-
-
-    # def reverse_mean_ode_solver_lambda_trick(self, xt, T=-1, save_states=False, save_dir='ode_state', **kwargs):
-    #     # T = self.solver_step if T < 0 else T
-    #     step_size = self.T // self.solver_step
-    #     x = xt.clone()
-    #     beta_min = self.beta_t(self.T - step_size)
-    #     beta_max = self.beta_t(step_size)
-    #     for i in tqdm(range(self.solver_step, 0, -1)):
-    #         # print("i: ", i)
-            
-    #         # score = - noise / self.f_sigma(t) if t != 100 else 0
-    #         # t_i1 = t - step_size
-            
-    #         # print(self.beta_t(self.T - step_size))
-    #         # print(self.beta_t(t))
-    #         # print(self.beta_t(step_size))
-    #         if i == self.solver_step:
-    #             t = self.T
-    #             t_i1 = self.beta_inv(beta_max + (i - 1) / self.solver_step * (beta_min - beta_max)).item()
-    #             # print("t:", t)
-    #             # print("t_i1:", t_i1)
-    #             # print("asdasd")
-    #             x = self.exp_theta_bar_s_t(t_i1, t) * x + (1 - self.exp_theta_bar_s_t(t_i1, t)) * self.mu
-    #             # x = x * self.dt
-    #         else:
-    #             t = self.beta_inv(beta_max + i / self.solver_step * (beta_min - beta_max)).item()
-    #             t_i1 = self.beta_inv(beta_max + (i - 1) / self.solver_step * (beta_min - beta_max)).item()
-    #             # print("t:", t)
-    #             # print("t_i1:", t_i1)
-    #             noise = self.model(x, self.mu, t, **kwargs)
-    #             x = self.exp_a_bar_s_t(t_i1, t) * x + (1 - self.exp_a_bar_s_t(t_i1, t)) * self.mu - 2 * self.lambda_square * self.ode_alpha_t(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t(t)) - torch.sqrt(self.exp_minus_beta_t(t_i1))) * noise
-    #             # x = x * self.dt
-
-
-    #         if save_states:  # only consider to save 100 images
-    #             interval = self.T // self.solver_step
-    #             if t % interval == 0:
-    #                 idx = t // interval
-    #                 os.makedirs(save_dir, exist_ok=True)
-    #                 tvutils.save_image(x.data, f'{save_dir}/state_{idx}.png', normalize=False)
-
-    #     t = step_size
-    #     t_i1 = 0
-    #     # print("t:", t)
-    #     # print("t_i1:", t_i1)
-    #     noise = self.model(x, self.mu, t, **kwargs)
-    #     x = self.exp_a_bar_s_t(t_i1, t) * x + (1 - self.exp_a_bar_s_t(t_i1, t)) * self.mu - 2 * self.lambda_square * self.ode_alpha_t(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t(t)) - torch.sqrt(self.exp_minus_beta_t(t_i1))) * noise
-
-    #     return x
-    
-
-    # def reverse_mean_ode_solver_lambda(self, xt, T=-1, save_states=False, save_dir='ode_state', **kwargs):
-    #     # T = self.solver_step if T < 0 else T
-    #     step_size = self.T // self.solver_step
-    #     x = xt.clone()
-    #     beta_min = self.beta_t(self.T - 11)
-    #     beta_max = self.beta_t(5)
-    #     for i in tqdm(range(self.solver_step, 0, -1)):
-    #         # print("i: ", i)
-            
-    #         # score = - noise / self.f_sigma(t) if t != 100 else 0
-    #         # t_i1 = t - step_size
-            
-    #         # print(self.beta_t(self.T - step_size))
-    #         # print(self.beta_t(t))
-    #         # print(self.beta_t(step_size))
-    #         if i == self.solver_step:
-    #             t = self.T
-    #             t_i1 = self.beta_inv(beta_max + (i - 1) / self.solver_step * (beta_min - beta_max)).item()
-    #             # print("t:", t)
-    #             # print("t_i1:", t_i1)
-    #             # print("asdasd")
-    #             x = self.exp_theta_bar_s_t(t_i1, t) * x + (1 - self.exp_theta_bar_s_t(t_i1, t)) * self.mu
-    #             # x = x * self.dt
-    #         # elif i == 1:
-    #         #     t = self.beta_inv(beta_max + i / self.solver_step * (beta_min - beta_max)).item()
-    #         #     t_i1 = 0
-    #         #     # print("t:", t)
-    #         #     # print("t_i1:", t_i1)
-    #         #     noise = self.model(x, self.mu, t, **kwargs)
-    #         #     x = self.exp_a_bar_s_t(t_i1, t) * x + (1 - self.exp_a_bar_s_t(t_i1, t)) * self.mu - 2 * self.lambda_square * self.ode_alpha_t(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t(t)) - torch.sqrt(self.exp_minus_beta_t(t_i1))) * noise
-    #         else:
-    #             t = self.beta_inv(beta_max + i / self.solver_step * (beta_min - beta_max)).item()
-    #             t_i1 = self.beta_inv(beta_max + (i - 1) / self.solver_step * (beta_min - beta_max)).item()
-    #             # print("t:", t)
-    #             # print("t_i1:", t_i1)
-    #             noise = self.model(x, self.mu, t, **kwargs)
-    #             x = self.exp_a_bar_s_t(t_i1, t) * x + (1 - self.exp_a_bar_s_t(t_i1, t)) * self.mu - 2 * self.lambda_square * self.ode_alpha_t(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t(t)) - torch.sqrt(self.exp_minus_beta_t(t_i1))) * noise
-    #             # x = x * self.dt
-
-
-                
-
-    #         if save_states:  # only consider to save 100 images
-    #             interval = self.T // self.solver_step
-    #             if t % interval == 0:
-    #                 idx = t // interval
-    #                 os.makedirs(save_dir, exist_ok=True)
-    #                 tvutils.save_image(x.data, f'{save_dir}/state_{idx}.png', normalize=False)
-
-    #     return x
-    
-    # def reverse_mean_ode_solver_2(self, xt, T=-1, save_states=False, save_dir='ode_state', **kwargs):
-    #     # T = self.solver_step if T < 0 else T
-    #     step_size = self.T // self.solver_step
-    #     x = xt.clone()
-    #     for t in tqdm(range(self.T, 0, -step_size)):
-    #         noise = self.model(x, self.mu, t, **kwargs) if t != self.T else 0
-    #         # score = - noise / self.f_sigma(t) if t != 100 else 0
-    #         # x = self.reverse_mean_ode_step(x, score, t)
-    #         t_i1 = t - step_size
-    #         # print(t)
-    #         # print(t_i1)
-    #         # print(self.exp_a_bar_s_t(t_i1, t)) 
-    #         # print(self.exp_theta_bar_s_t(t_i1, t))
-    #         # print(torch.sqrt(self.exp_minus_beta_t(t_i1)))
-    #         # print(torch.sqrt(self.exp_minus_beta_t(t)))
-    #         # print(torch.sqrt(self.exp_minus_beta_t(t_i1)) - torch.sqrt(self.exp_minus_beta_t(t)))
-    #         betat_i1 = self.beta_t(t_i1)
-    #         betat = self.beta_t(t)
-    #         print("betat_i1", betat_i1)
-    #         print("betat", betat)
-    #         idx = self.beta_inv(0.5 * (betat_i1 + betat)).item()
-    #         print("idx", idx)
-
-    #         if t == self.T:
-    #             # print("asdasd")
-    #             x = self.exp_theta_bar_s_t(t_i1, t) * x + (1 - self.exp_theta_bar_s_t(t_i1, t)) * self.mu
-    #             # x = x * self.dt
-    #         else:
-    #             coeff = 2 * self.lambda_square * self.ode_alpha_t(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t(t)) - torch.sqrt(self.exp_minus_beta_t(t_i1)))
-    #             if t == step_size:
-    #                 coeff2 = coeff
-    #             else: 
-    #                 coeff2 = 2 * self.lambda_square * self.ode_alpha_t(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (4 * torch.sqrt(self.exp_minus_beta_t(t)) - 2 * torch.sqrt(self.exp_minus_beta_t(t_i1)) * (self.beta_t(t_i1) - self.beta_t(t)) - 4 * torch.sqrt(self.exp_minus_beta_t(t_i1))) / (0.5 * (self.beta_t(t_i1) - self.beta_t(t)))
-                
-    #             print(coeff)
-    #             print(coeff2)
-    #             mid = self.exp_a_bar_s_t_gamma(idx, t) * x + (1 - self.exp_a_bar_s_t_gamma(idx, t)) * self.mu - 2 * self.lambda_square * self.ode_alpha_t(idx) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t(t)) - torch.sqrt(self.exp_minus_beta_t(idx))) * noise
-    #             new_noise = self.model(mid, self.mu, idx, **kwargs)
-    #             x = self.exp_a_bar_s_t_gamma(t_i1, t) * x + (1 - self.exp_a_bar_s_t_gamma(t_i1, t)) * self.mu - coeff * noise - coeff2 * (new_noise - noise)
-    #             # x = x * self.dt
-
-    #         if save_states:  # only consider to save 100 images
-    #             interval = self.T // self.solver_step
-    #             if t % interval == 0:
-    #                 idx = t // interval
-    #                 os.makedirs(save_dir, exist_ok=True)
-    #                 tvutils.save_image(x.data, f'{save_dir}/state_{idx}.png', normalize=False)
-
-    #     return x
     
 
     def unidb_noise_mean_ode_solver(self, xt, T=-1, save_states=False, save_dir='ode_state', **kwargs):
@@ -694,13 +500,6 @@ class GOUB(SDE):
 
             else:
                 coeff = 2 * self.lambda_square * self.ode_alpha_t_gamma(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t_gamma(t)) - torch.sqrt(self.exp_minus_beta_t_gamma(t_i1)))
-                # if t == step_size:
-                #     coeff2 = coeff
-                # else: 
-                #     coeff2 = 2 * self.lambda_square * self.ode_alpha_t_gamma(t_i1) / torch.sqrt(self.ode_sigma_t(self.T)) * (4 * torch.sqrt(self.exp_minus_beta_t_gamma(t)) - 2 * torch.sqrt(self.exp_minus_beta_t_gamma(t_i1)) * (self.beta_t_gamma(t_i1) - self.beta_t_gamma(t)) - 4 * torch.sqrt(self.exp_minus_beta_t_gamma(t_i1))) / (0.5 * (self.beta_t_gamma(t_i1) - self.beta_t_gamma(t)))
-                
-                # print(coeff)
-                # print(coeff2)
                 mid = self.exp_a_bar_s_t_gamma(idx, t) * x + (1 - self.exp_a_bar_s_t_gamma(idx, t)) * self.mu - 2 * self.lambda_square * self.ode_alpha_t_gamma(idx) / torch.sqrt(self.ode_sigma_t(self.T)) * (torch.sqrt(self.exp_minus_beta_t_gamma(t)) - torch.sqrt(self.exp_minus_beta_t_gamma(idx))) * noise
                 new_noise = self.model(mid, self.mu, idx, **kwargs)
                 # x = self.exp_a_bar_s_t_gamma(t_i1, t) * x + (1 - self.exp_a_bar_s_t_gamma(t_i1, t)) * self.mu - coeff * noise - coeff2 * (new_noise - noise)
@@ -767,14 +566,6 @@ class GOUB(SDE):
                 idx = self.beta_inv_gamma(beta_now + r * hi).item()
                 del_noise_idx = self.delta_noise(t, idx) if self.solver_type == "sde" else 0
                 del_noise = self.delta_noise(t, next) if self.solver_type == "sde" else 0
-                # print()
-                # print(t)
-                # print(next)
-                # print(idx)
-                # print(self.ode_sigma_t(self.T))
-                # print((torch.sqrt(self.exp_minus_beta_t(t)) - torch.sqrt(self.exp_minus_beta_t(idx))))
-                # print(del_noise_idx)
-                # print(del_noise)
 
                 if t == self.T:
                     # y = self.ode_alpha_t_gamma(idx) / self.ode_alpha_t_gamma(t) * x + (1 - self.ode_alpha_t_gamma(idx) / self.ode_alpha_t_gamma(t)) * self.mu
@@ -915,6 +706,37 @@ class GOUB(SDE):
 
         return x
     
+    def unidb_sde_solver_data_prediction_update(self, xt, T=-1, save_states=False, save_dir='sde_state', **kwargs):
+        # T = self.solver_step if T < 0 else T
+        step_size = self.T // self.solver_step
+        x = xt.clone()
+        for t in tqdm(range(self.T, 0, -step_size)):
+            noise = self.model(x, self.mu, t, **kwargs) if t != self.T else 0
+            # score = - noise / self.f_sigma(t) if t != 100 else 0
+            predicted_x0 = self.predict_x0_through_score(x, t, noise)
+            # print(predicted_x0)
+            t_next = t - step_size
+            z = torch.randn_like(x)
+            delta = self.lambda_square * self.ode_sigma_t(t_next) * torch.sqrt(1 / (torch.exp((self.thetas_cumsum[t_next]) * self.dt) ** 2 - 1) - 1 / (torch.exp((self.thetas_cumsum[t]) * self.dt) ** 2 - 1))
+            if t == step_size:
+                delta = 0
+
+            coeff1 = self.ode_alpha_t_gamma(t_next) * self.ode_alpha_t(t) * self.ode_sigma_t(t_next) / (self.ode_alpha_t_gamma(t) * self.ode_alpha_t(t_next) * self.ode_sigma_t(t))
+            coeff3 = self.ode_alpha_t_gamma(t_next) / self.ode_alpha_t_gamma(0) - self.ode_alpha_t_gamma(t_next) * self.ode_sigma_t(t_next) / (self.ode_alpha_t(t_next) * self.ode_alpha_t_gamma(0) * self.exp_minus_beta_t_gamma(t))
+            coeff2 = 1 - coeff1 - coeff3
+            x = coeff1 * x + coeff2 * self.mu + coeff3 * predicted_x0 + delta * z
+            # x = self.ode_sigma_t(t_next) / self.ode_sigma_t(t) * x + (1 - self.ode_sigma_t(t_next) / self.ode_sigma_t(t) + self.ode_sigma_t(t_next) / self.ode_sigma_t(self.T) / self.exp_minus_beta_t_gamma(t) - self.ode_alpha_t_gamma(t_next) / self.ode_sigma_t(self.T)) * self.mu + (self.ode_alpha_t_gamma(t_next) / self.ode_sigma_t(self.T) - self.ode_sigma_t(t_next) / self.ode_sigma_t(self.T) / self.exp_minus_beta_t_gamma(t)) * predicted_x0 + delta * z
+            
+            if save_states:  # only consider to save 100 images
+                interval = self.T // self.solver_step
+                if t % interval == 0:
+                    idx = t // interval
+                    os.makedirs(save_dir, exist_ok=True)
+                    tvutils.save_image(x.data, f'{save_dir}/state_{idx}.png', normalize=False)
+                    tvutils.save_image(predicted_x0.data, f'{save_dir}/x0_{idx}.png', normalize=False)
+
+        return x
+    
     def goub_sde_solver_data_prediction(self, xt, T=-1, save_states=False, save_dir='sde_state', **kwargs):
         # T = self.solver_step if T < 0 else T
         step_size = self.T // self.solver_step
@@ -952,9 +774,6 @@ class GOUB(SDE):
         print("r", r)
         ty = "multi_step" # decide gradient approximation
         assert ty in ["single_step", "multi_step"]
-        # print(ty)
-        # type_solver = "sde" # decide ode solver or sde solver
-        # assert type_solver in ["sde", "ode"]
 
         for t in tqdm(range(self.T, 0, -step_size)):
             if ty == "single_step":
@@ -988,16 +807,7 @@ class GOUB(SDE):
                 
                 if t == step_size:
                     coeff2 = self.ode_alpha_t_gamma(t) / self.ode_sigma_t(self.T) / r
-                # TODO: last step
-                # print(self.ode_alpha_t_gamma(next) / self.ode_sigma_t(self.T))
-                # print(self.ode_sigma_t(next) / self.ode_sigma_t(self.T) / self.exp_minus_beta_t_gamma(t))
-                # print("----------------------------")
-                # print(self.ode_sigma_t(next) / self.ode_sigma_t(self.T) / self.exp_minus_beta_t_gamma(t))
-                # print(self.ode_alpha_t_gamma(t) / self.ode_sigma_t(self.T) * hi)
-                # print(self.ode_alpha_t_gamma(t) / self.ode_sigma_t(self.T))
-                # print("----------------------------")
-                # print(coeff)
-                # print(coeff2)
+                
                 x = self.ode_sigma_t(next) / self.ode_sigma_t(t) * x \
                     + (1 - self.ode_sigma_t(next) / self.ode_sigma_t(t) + self.ode_sigma_t(next) / self.ode_sigma_t(self.T) / self.exp_minus_beta_t_gamma(t) - self.ode_alpha_t_gamma(next) / self.ode_sigma_t(self.T)) * self.mu \
                     + coeff * predicted_x0 + coeff2 * (new_predicted_x0 - predicted_x0) + del_data * z2
@@ -1044,17 +854,6 @@ class GOUB(SDE):
                     self.update_list_1(self.data_buffer, predicted_x0)
                     self.update_list_1(self.noise_buffer, noise)
                 else:
-                    # print(idx)
-                    # print(coeff)
-                    # print(coeff2)
-                    # print(r * hi_minus_1)
-                    # print(self.ode_alpha_t_gamma(t) / self.ode_sigma_t(self.T) * (hi - 1))
-                    # print(beta_next)
-                    # print(beta_now)
-                    # print(beta_last)
-                    # print((1 - self.ode_sigma_t(next) / self.ode_sigma_t(t) + self.ode_sigma_t(next) / self.ode_sigma_t(self.T) / self.exp_minus_beta_t_gamma(t) - self.ode_alpha_t_gamma(next) / self.ode_sigma_t(self.T)))
-                    # print(del_data)
-                    # print(del_data_last_idx)
                     
                     last_x = self.x_buffer[0]
                     last_data_prediction = self.data_buffer[0]

@@ -21,7 +21,7 @@ opt = option.dict_to_nonedict(opt)
 model = create_model(opt)
 device = model.device
 
-sde = util.GOUB(lambda_square=opt["sde"]["lambda_square"], gamma=opt["sde"]["gamma"], T=opt["sde"]["T"], solver_step=opt["sde"]["solver_step"], schedule=opt["sde"]["schedule"], eps=opt["sde"]["eps"], device=device)
+sde = util.UniDB(lambda_square=opt["sde"]["lambda_square"], gamma=opt["sde"]["gamma"], T=opt["sde"]["T"], solver_step=opt["sde"]["solver_step"], schedule=opt["sde"]["schedule"], eps=opt["sde"]["eps"], device=device)
 sde.set_model(model.model)
 
 def deraining(image):
